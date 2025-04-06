@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rememTile - Memory Map Notes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+        }
+        #map {
+            height: 100vh;
+            width: 70%;
+        }
+        #sidebar {
+            width: 30%;
+            height: 100vh;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+            border-left: 1px solid #ddd;
+        }
+        .note-title {
+            cursor: pointer;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .note-details {
+            display: none;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="sidebar">
+        <h2>Note Details</h2>
+        <div id="note-content"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([22.2971554, 114.172981], 13); // (lat, lng)
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Create marker cluster group
+        const markers = L.markerClusterGroup({
+            maxClusterRadius: 50,
+            iconCreateFunction: function(cluster) {
+                return L.divIcon({
+                    html: `<div style="background: #ff4444; color: white; width: 30px; height: 30px; 
+                          border-radius: 50%; text-align: center; line-height: 30px;">
+                          ${cluster.getChildCount()}</div>`,
+                    className: 'marker-cluster',
+                    iconSize: L.point(30, 30)
+                });
+            }
+        });
+
+        // Sample GeoJSON data (you can replace this with your own)
+        const geojsonData = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [114.1570662, 22.3343355] // (lng, lat)
+                    },
+                    "properties": {
+                        "title": "魚你相聚",
+                        "description": "Amazing food with great atmosphere",
+                        "category": "restaurant",
+                        "date": "2024-03-15"
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [114.1697081,22.3150309] // (lng, lat)
+                    },
+                    "properties": {
+                        "title": "Health Tip",
+                        "description": "Wash hands frequently to prevent diseases",
+                        "category": "health",
+                        "date": "2024-01-20"
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [114.2768261, 22.2805249] // (lng, lat)
+                    },
+                    "properties": {
+                        "title": "Ex-gf favourite food recipe",
+                        "description": "Useless Ex-gf favourite food recipe",
+                        "category": "health",
+                        "date": "2024-02-20"
+                    }
+                }
+            ]
+        };
+
+        // Custom pin icon
+        const pinIcon = L.icon({
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34]
+        });
+
+        // Function to show note details in sidebar
+        function showNoteDetails(properties) {
+            const content = document.getElementById('note-content');
+            content.innerHTML = `
+                <div class="note-details" style="display: block;">
+                    <h3>${properties.title}</h3>
+                    <p>${properties.description}</p>
+                    <p><strong>Category:</strong> ${properties.category}</p>
+                    <p><strong>Date:</strong> ${properties.date}</p>
+                </div>
+            `;
+        }
+
+        // Add GeoJSON layer
+        L.geoJSON(geojsonData, {
+            pointToLayer: function(feature, latlng) {
+                const marker = L.marker(latlng, { icon: pinIcon });
+                markers.addLayer(marker);
+                
+                // Click event for each marker
+                marker.on('click', function(e) {
+                    showNoteDetails(feature.properties);
+                    map.panTo(latlng);
+                });
+                
+                return marker;
+            }
+        });
+
+        // Add markers to map
+        map.addLayer(markers);
+
+        // Initial sidebar content
+        document.getElementById('note-content').innerHTML = 
+            '<p>Click a pin on the map to view note details</p>';
+    </script>
+</body>
+</html>
